@@ -24,6 +24,7 @@ const AppContent: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [savedScrollPosition, setSavedScrollPosition] = useState<number>(0);
 
   // URL management for navigation persistence
   const getProductIdFromUrl = (): number | null => {
@@ -40,6 +41,34 @@ const AppContent: React.FC = () => {
       url.searchParams.delete('product');
     }
     window.history.pushState({}, '', url.toString());
+  };
+
+  // Scroll position management
+  const saveScrollPosition = () => {
+    const scrollY = window.scrollY || document.documentElement.scrollTop;
+    // Only save if there's meaningful scroll (more than 50px to avoid saving small scrolls)
+    if (scrollY > 50) {
+      setSavedScrollPosition(scrollY);
+      // Also save to sessionStorage for browser refresh scenarios
+      sessionStorage.setItem('productListScrollPosition', scrollY.toString());
+    }
+  };
+
+  const restoreScrollPosition = (smooth: boolean = false) => {
+    // Try to get from state first, then sessionStorage
+    const scrollY = savedScrollPosition || parseInt(sessionStorage.getItem('productListScrollPosition') || '0', 10);
+    if (scrollY > 0) {
+      // Use requestAnimationFrame to ensure DOM is ready
+      requestAnimationFrame(() => {
+        window.scrollTo({
+          top: scrollY,
+          behavior: smooth ? 'smooth' : 'auto'
+        });
+      });
+      // Clear the saved position after restoring
+      sessionStorage.removeItem('productListScrollPosition');
+      setSavedScrollPosition(0);
+    }
   };
 
   // Initialize selected product from URL on component mount
@@ -72,12 +101,29 @@ const AppContent: React.FC = () => {
         setSelectedProduct(product || null);
       } else {
         setSelectedProduct(null);
+        // Restore scroll position when navigating back to product list via browser buttons
+        setTimeout(() => {
+          restoreScrollPosition(true);
+        }, 100);
       }
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, [products]);
+
+  // Restore scroll position when component mounts and we're on the product list
+  useEffect(() => {
+    if (!selectedProduct && products.length > 0) {
+      const productIdFromUrl = getProductIdFromUrl();
+      if (!productIdFromUrl) {
+        // We're on the main product list, restore scroll position (instant for page load)
+        setTimeout(() => {
+          restoreScrollPosition(false);
+        }, 200); // Slightly longer delay for initial load
+      }
+    }
+  }, [selectedProduct, products]);
 
   const handleProductImageClick = (product: Product) => {
     setUploadingProduct(product);
@@ -87,6 +133,8 @@ const AppContent: React.FC = () => {
   };
 
   const handleProductVariantsClick = (product: Product) => {
+    // Save current scroll position before navigating
+    saveScrollPosition();
     setSelectedProduct(product);
     setProductIdInUrl(product.id);
   };
@@ -122,6 +170,10 @@ const AppContent: React.FC = () => {
   const handleBackToProducts = () => {
     setSelectedProduct(null);
     setProductIdInUrl(null);
+    // Restore scroll position after returning to product list with smooth animation
+    setTimeout(() => {
+      restoreScrollPosition(true);
+    }, 100); // Small delay to ensure DOM is updated
   };
 
   if (loading) return <LoadingSpinner />;
