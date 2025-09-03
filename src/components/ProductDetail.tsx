@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Package, Upload } from 'lucide-react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { ArrowLeft, Package, Upload, Sparkles, Star } from 'lucide-react';
 import { Product, Variant } from '../types/Product';
 import { apiService } from '../services/api';
 import { ImageUpload } from './ImageUpload';
+import FloatingParticles from './FloatingParticles';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface ProductDetailProps {
@@ -23,6 +25,12 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+
+  // Scroll-based animations
+  const { scrollY } = useScroll();
+  const headerY = useTransform(scrollY, [0, 300], [0, -100]);
+  const contentY = useTransform(scrollY, [0, 300], [0, 50]);
+  const opacity = useTransform(scrollY, [0, 200], [1, 0.8]);
 
   const handleProductImageClick = () => {
     setUploadType('product');
@@ -82,60 +90,214 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
   const productDescription = product.description_translations[language] || product.description_translations.en;
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6 ${isArabic ? 'text-right' : 'text-left'}`}>
-      <div className="max-w-6xl mx-auto">
-        <button
+    <motion.div 
+      className={`relative min-h-screen overflow-hidden ${isArabic ? 'text-right' : 'text-left'}`}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      {/* Floating Particles Background */}
+      <FloatingParticles />
+      
+      {/* Dynamic gradient background */}
+      <motion.div 
+        className="fixed inset-0 bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50"
+        animate={{
+          background: [
+            "linear-gradient(135deg, rgb(250 245 255) 0%, rgb(239 246 255) 50%, rgb(238 242 255) 100%)",
+            "linear-gradient(135deg, rgb(238 242 255) 0%, rgb(250 245 255) 50%, rgb(224 242 254) 100%)",
+            "linear-gradient(135deg, rgb(224 242 254) 0%, rgb(238 242 255) 50%, rgb(250 245 255) 100%)"
+          ]
+        }}
+        transition={{
+          duration: 10,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+      
+      {/* Glass overlay */}
+      <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px]" />
+      
+      <div className="relative z-10 max-w-7xl mx-auto p-6">
+        {/* Animated back button */}
+        <motion.button
           onClick={onBack}
-          className={`flex items-center ${isArabic ? 'space-x-reverse space-x-2' : 'space-x-2'} text-blue-600 hover:text-blue-700 mb-6 transition-colors duration-200`}
+          className={`flex items-center ${isArabic ? 'space-x-reverse space-x-3' : 'space-x-3'} text-white bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-3 rounded-full font-semibold mb-8 shadow-2xl backdrop-blur-sm`}
+          style={{ y: headerY, opacity }}
+          initial={{ x: -100, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          whileHover={{ 
+            scale: 1.05, 
+            boxShadow: "0 20px 40px rgba(0, 0, 0, 0.2)",
+            background: "linear-gradient(45deg, #3B82F6, #8B5CF6, #EC4899)"
+          }}
+          whileTap={{ scale: 0.95 }}
         >
-          <ArrowLeft className={`h-5 w-5 ${isArabic ? 'rotate-180' : ''}`} />
-          <span className="font-medium">{isArabic ? 'العودة إلى المنتجات' : 'Back to Products'}</span>
-        </button>
+          <motion.div
+            animate={{ x: isArabic ? [0, 5, 0] : [0, -5, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <ArrowLeft className={`h-5 w-5 ${isArabic ? 'rotate-180' : ''}`} />
+          </motion.div>
+          <span>{isArabic ? 'العودة إلى المنتجات' : 'Back to Products'}</span>
+          
+          {/* Floating sparkles */}
+          {Array.from({ length: 3 }, (_, i) => (
+            <motion.div
+              key={i}
+              className="absolute text-yellow-300"
+              style={{
+                left: `${30 + i * 20}%`,
+                top: `${20 + i * 15}%`,
+              }}
+              animate={{
+                scale: [0, 1, 0],
+                rotate: 360,
+                opacity: [0, 1, 0],
+              }}
+              transition={{
+                duration: 3,
+                delay: i * 0.5,
+                repeat: Infinity,
+              }}
+            >
+              <Sparkles className="h-2 w-2" />
+            </motion.div>
+          ))}
+        </motion.button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Product Info */}
-          <div className="bg-white rounded-2xl p-8 shadow-sm">
-            <h1 className={`text-3xl font-bold text-gray-900 mb-4 ${isArabic ? 'font-arabic' : ''}`}>
+        {/* Main content with 3D perspective */}
+        <motion.div 
+          className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12"
+          style={{ y: contentY }}
+          initial={{ opacity: 0, y: 100 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+        >
+          {/* Product Info with glass morphism */}
+          <motion.div 
+            className="bg-white/30 backdrop-blur-2xl rounded-3xl p-8 shadow-2xl border border-white/20"
+            initial={{ opacity: 0, x: -100, rotateY: -30 }}
+            animate={{ opacity: 1, x: 0, rotateY: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            whileHover={{ 
+              scale: 1.02, 
+              boxShadow: "0 30px 60px rgba(0, 0, 0, 0.15)",
+              backgroundColor: "rgba(255, 255, 255, 0.4)"
+            }}
+          >
+            <motion.h1 
+              className={`text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900 mb-6 ${isArabic ? 'font-arabic' : ''}`}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+            >
               {productName}
-            </h1>
-            <p className={`text-gray-600 mb-6 leading-relaxed ${isArabic ? 'font-arabic' : ''}`}>
-              {productDescription}
-            </p>
+              
+              {/* Floating rating stars */}
+              <motion.div className="flex mt-2 space-x-1">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ delay: 0.8 + i * 0.1, type: "spring" }}
+                  >
+                    <Star className="h-5 w-5 text-yellow-400 fill-current" />
+                  </motion.div>
+                ))}
+              </motion.div>
+            </motion.h1>
             
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="font-medium text-gray-700">{isArabic ? 'الكود:' : 'Code:'}</span>
-                <span className="ml-2 text-gray-600">{product.product_code}</span>
-              </div>
-              <div>
-                <span className="font-medium text-gray-700">{isArabic ? 'الفئة:' : 'Category:'}</span>
-                <span className="ml-2 text-gray-600">{product.product_category}</span>
-              </div>
-              <div>
-                <span className="font-medium text-gray-700">{isArabic ? 'المنشأ:' : 'Origin:'}</span>
-                <span className="ml-2 text-gray-600">{product.country_origin_name}</span>
-              </div>
-              <div>
-                <span className="font-medium text-gray-700">{isArabic ? 'الحالة:' : 'Status:'}</span>
-                <span className={`ml-2 ${product.in_stock ? 'text-green-600' : 'text-red-600'}`}>
-                  {product.in_stock ? (isArabic ? 'متوفر' : 'In Stock') : (isArabic ? 'غير متوفر' : 'Out of Stock')}
-                </span>
-              </div>
-            </div>
-          </div>
+            <motion.p 
+              className={`text-gray-700 mb-8 leading-relaxed text-lg ${isArabic ? 'font-arabic' : ''}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.7 }}
+            >
+              {productDescription}
+            </motion.p>
+            
+            {/* Animated info grid */}
+            <motion.div 
+              className="grid grid-cols-2 gap-6 text-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8 }}
+            >
+              {[
+                { label: isArabic ? 'الكود:' : 'Code:', value: product.product_code },
+                { label: isArabic ? 'الفئة:' : 'Category:', value: product.product_category },
+                { label: isArabic ? 'المنشأ:' : 'Origin:', value: product.country_origin_name },
+                { label: isArabic ? 'الحالة:' : 'Status:', value: product.in_stock ? (isArabic ? 'متوفر' : 'In Stock') : (isArabic ? 'غير متوفر' : 'Out of Stock') }
+              ].map((item, index) => (
+                <motion.div
+                  key={index}
+                  className="bg-white/40 backdrop-blur-sm p-4 rounded-xl border border-white/30"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.9 + index * 0.1 }}
+                  whileHover={{ 
+                    scale: 1.05, 
+                    backgroundColor: "rgba(255, 255, 255, 0.6)"
+                  }}
+                >
+                  <span className="font-semibold text-gray-800">{item.label}</span>
+                  <motion.span 
+                    className={`ml-2 ${index === 3 && product.in_stock ? 'text-emerald-600' : index === 3 ? 'text-red-500' : 'text-gray-600'} font-medium`}
+                    animate={index === 3 && product.in_stock ? {
+                      textShadow: [
+                        "0 0 5px rgba(16, 185, 129, 0.5)",
+                        "0 0 10px rgba(16, 185, 129, 0.8)",
+                        "0 0 5px rgba(16, 185, 129, 0.5)"
+                      ]
+                    } : {}}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    {item.value}
+                  </motion.span>
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.div>
 
-          {/* Product Image */}
-          <div className="bg-white rounded-2xl p-8 shadow-sm">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">{isArabic ? 'صورة المنتج' : 'Product Image'}</h2>
-            <div 
-              className="relative aspect-square bg-gray-50 rounded-xl overflow-hidden cursor-pointer group"
+          {/* Product Image with enhanced 3D effects */}
+          <motion.div 
+            className="bg-white/30 backdrop-blur-2xl rounded-3xl p-8 shadow-2xl border border-white/20"
+            initial={{ opacity: 0, x: 100, rotateY: 30 }}
+            animate={{ opacity: 1, x: 0, rotateY: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            whileHover={{ 
+              scale: 1.02, 
+              boxShadow: "0 30px 60px rgba(0, 0, 0, 0.15)",
+              backgroundColor: "rgba(255, 255, 255, 0.4)"
+            }}
+          >
+            <motion.h2 
+              className="text-2xl font-bold text-gray-900 mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 }}
+            >
+              {isArabic ? 'صورة المنتج' : 'Product Image'}
+            </motion.h2>
+            
+            <motion.div 
+              className="relative aspect-square bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl overflow-hidden cursor-pointer group"
               onClick={handleProductImageClick}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.98 }}
             >
               {productImageUrl ? (
-                <img
+                <motion.img
                   src={productImageUrl}
                   alt={product.name_translations.en}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="w-full h-full object-cover"
+                  whileHover={{ scale: 1.1 }}
+                  transition={{ duration: 0.4 }}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.style.display = 'none';
@@ -157,49 +319,138 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
                   }}
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center">
+                <motion.div 
+                  className="w-full h-full flex items-center justify-center"
+                  whileHover={{ scale: 1.05 }}
+                >
                   <div className="text-center">
                     <Package className="h-12 w-12 mx-auto mb-2 text-gray-400" />
                     <p className="text-gray-500 text-sm">No image</p>
                   </div>
-                </div>
+                </motion.div>
               )}
               
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                <div className="bg-white text-gray-800 px-4 py-2 rounded-lg font-medium shadow-lg flex items-center space-x-2">
-                  <Upload className="h-4 w-4" />
+              {/* Premium overlay */}
+              <motion.div 
+                className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center"
+                initial={{ opacity: 0 }}
+                whileHover={{ opacity: 1 }}
+              >
+                <motion.div
+                  className="bg-white/90 backdrop-blur-sm text-gray-800 px-6 py-3 rounded-full font-semibold shadow-2xl flex items-center space-x-2"
+                  initial={{ y: 20, scale: 0.8 }}
+                  whileHover={{ y: 0, scale: 1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Upload className="h-5 w-5" />
                   <span>{isArabic ? 'رفع صورة' : 'Upload Image'}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+                </motion.div>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        </motion.div>
 
-        {/* Variants */}
-        <div className="bg-white rounded-2xl p-8 shadow-sm">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">{isArabic ? 'متغيرات المنتج' : 'Product Variants'}</h2>
+        {/* Enhanced Variants Section */}
+        <motion.div 
+          className="bg-white/30 backdrop-blur-2xl rounded-3xl p-8 shadow-2xl border border-white/20"
+          initial={{ opacity: 0, y: 100 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.8 }}
+        >
+          <motion.h2 
+            className="text-3xl font-black text-gray-900 mb-8 text-center"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 1, type: "spring" }}
+          >
+            {isArabic ? 'متغيرات المنتج' : 'Product Variants'}
+          </motion.h2>
           
           {product.variants.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Package className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-              <p>{isArabic ? 'لا توجد متغيرات متاحة' : 'No variants available'}</p>
-            </div>
+            <motion.div 
+              className="text-center py-12 text-gray-500"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 1.2 }}
+            >
+              <motion.div
+                animate={{ 
+                  y: [0, -10, 0],
+                  rotate: [0, 5, -5, 0]
+                }}
+                transition={{ 
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              >
+                <Package className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+              </motion.div>
+              <p className="text-lg">{isArabic ? 'لا توجد متغيرات متاحة' : 'No variants available'}</p>
+            </motion.div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {product.variants.map((variant) => {
+            <motion.div 
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.2 }}
+            >
+              {product.variants.map((variant, index) => {
                 const variantImageUrl = apiService.getImageUrl(variant.image);
                 
                 return (
-                  <div key={variant.id} className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all duration-200 group">
-                    <div 
-                      className="aspect-square bg-gray-50 rounded-lg mb-3 overflow-hidden cursor-pointer relative group"
+                  <motion.div 
+                    key={variant.id} 
+                    className="bg-white/40 backdrop-blur-sm border border-white/30 rounded-2xl p-6 hover:shadow-2xl transition-all duration-300 group relative overflow-hidden"
+                    initial={{ 
+                      opacity: 0, 
+                      y: 60,
+                      rotateY: 45 
+                    }}
+                    animate={{ 
+                      opacity: 1, 
+                      y: 0,
+                      rotateY: 0 
+                    }}
+                    transition={{
+                      duration: 0.6,
+                      delay: 1.4 + index * 0.1,
+                      ease: "easeOut"
+                    }}
+                    whileHover={{ 
+                      scale: 1.05,
+                      backgroundColor: "rgba(255, 255, 255, 0.6)",
+                      boxShadow: "0 25px 50px rgba(0, 0, 0, 0.15)"
+                    }}
+                  >
+                    {/* Floating sparkles on hover */}
+                    <motion.div
+                      className="absolute top-2 right-2 text-yellow-400 opacity-0 group-hover:opacity-100"
+                      animate={{ 
+                        scale: [0, 1, 0],
+                        rotate: 360 
+                      }}
+                      transition={{ 
+                        duration: 2, 
+                        repeat: Infinity 
+                      }}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                    </motion.div>
+                    
+                    <motion.div 
+                      className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl mb-4 overflow-hidden cursor-pointer relative"
                       onClick={() => handleVariantImageClick(variant)}
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.95 }}
                     >
                       {variantImageUrl ? (
-                        <img
+                        <motion.img
                           src={variantImageUrl}
                           alt={`${product.name_translations.en} - ${variant.size}`}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          className="w-full h-full object-cover"
+                          whileHover={{ scale: 1.2 }}
+                          transition={{ duration: 0.3 }}
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
                             target.style.display = 'none';
@@ -221,57 +472,93 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
                           }}
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center">
+                        <motion.div 
+                          className="w-full h-full flex items-center justify-center"
+                          whileHover={{ scale: 1.05 }}
+                        >
                           <div className="text-center">
-                            <Package className="h-8 w-8 mx-auto mb-1 text-gray-400" />
+                            <Package className="h-10 w-10 mx-auto mb-1 text-gray-400" />
                             <p className="text-gray-500 text-xs">No image</p>
                           </div>
-                        </div>
+                        </motion.div>
                       )}
                       
-                      <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-300 flex items-center justify-center opacity-0 hover:opacity-100">
-                        <div className="bg-white text-gray-800 px-3 py-1 rounded-lg text-sm font-medium shadow-lg flex items-center space-x-1">
+                      {/* Upload overlay */}
+                      <motion.div 
+                        className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 flex items-center justify-center"
+                        initial={{ opacity: 0 }}
+                        whileHover={{ opacity: 1 }}
+                      >
+                        <motion.div
+                          className="bg-white/90 backdrop-blur-sm text-gray-800 px-3 py-2 rounded-full text-sm font-medium shadow-lg flex items-center space-x-1"
+                          initial={{ y: 10, scale: 0.8 }}
+                          whileHover={{ y: 0, scale: 1 }}
+                        >
                           <Upload className="h-3 w-3" />
                           <span>{isArabic ? 'رفع' : 'Upload'}</span>
-                        </div>
-                      </div>
-                    </div>
+                        </motion.div>
+                      </motion.div>
+                    </motion.div>
                     
-                    <div className="text-center">
-                      <p className="font-medium text-gray-900">{variant.size}</p>
-                      <p className="text-sm text-gray-500">
+                    <motion.div 
+                      className="text-center"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 1.6 + index * 0.1 }}
+                    >
+                      <motion.p 
+                        className="font-bold text-gray-900 text-lg mb-2"
+                        whileHover={{ scale: 1.05 }}
+                      >
+                        {variant.size}
+                      </motion.p>
+                      <motion.p 
+                        className="text-sm text-gray-600 bg-gray-100/50 backdrop-blur-sm px-3 py-1 rounded-full inline-block"
+                        whileHover={{ 
+                          backgroundColor: "rgba(59, 130, 246, 0.1)",
+                          scale: 1.05 
+                        }}
+                      >
                         {isArabic ? 'المعرف:' : 'ID:'} {variant.id}
-                      </p>
-                    </div>
-                  </div>
+                      </motion.p>
+                    </motion.div>
+                  </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
 
+        {/* Premium Image Upload Modal */}
         {showImageUpload && (
-          <ImageUpload
-            onImageSelect={handleImageUpload}
-            currentImage={
-              uploadType === 'product' 
-                ? productImageUrl 
-                : selectedVariant 
-                  ? apiService.getImageUrl(selectedVariant.image)
-                  : null
-            }
-            isUploading={isUploading}
-            uploadError={uploadError}
-            uploadSuccess={uploadSuccess}
-            onClose={() => setShowImageUpload(false)}
-            title={
-              uploadType === 'product' 
-                ? `${isArabic ? 'رفع صورة لـ' : 'Upload Image for'} ${productName}`
-                : `${isArabic ? 'رفع صورة للمتغير' : 'Upload Image for Variant'} ${selectedVariant?.size}`
-            }
-          />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50"
+          >
+            <ImageUpload
+              onImageSelect={handleImageUpload}
+              currentImage={
+                uploadType === 'product' 
+                  ? productImageUrl 
+                  : selectedVariant 
+                    ? apiService.getImageUrl(selectedVariant.image)
+                    : null
+              }
+              isUploading={isUploading}
+              uploadError={uploadError}
+              uploadSuccess={uploadSuccess}
+              onClose={() => setShowImageUpload(false)}
+              title={
+                uploadType === 'product' 
+                  ? `${isArabic ? 'رفع صورة لـ' : 'Upload Image for'} ${productName}`
+                  : `${isArabic ? 'رفع صورة للمتغير' : 'Upload Image for Variant'} ${selectedVariant?.size}`
+              }
+            />
+          </motion.div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 };

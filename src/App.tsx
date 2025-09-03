@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Package } from 'lucide-react';
 import { Product } from './types/Product';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -11,6 +12,8 @@ import { ImageUpload } from './components/ImageUpload';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { ErrorMessage } from './components/ErrorMessage';
 import ErrorBoundary from './components/ErrorBoundary';
+import FloatingParticles from './components/FloatingParticles';
+import PageTransition from './components/PageTransition';
 import { apiService } from './services/api';
 import { useLanguage } from './contexts/LanguageContext';
 
@@ -25,6 +28,12 @@ const AppContent: React.FC = () => {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [savedScrollPosition, setSavedScrollPosition] = useState<number>(0);
+
+  // Remove all heavy scroll-based parallax animations
+  // const { scrollY } = useScroll();
+  // const headerY = useTransform(scrollY, [0, 300], [0, -150]);
+  // const headerOpacity = useTransform(scrollY, [0, 300], [1, 0.3]);
+  // const headerScale = useTransform(scrollY, [0, 300], [1, 0.95]);
 
   // URL management for navigation persistence
   const getProductIdFromUrl = (): number | null => {
@@ -181,96 +190,131 @@ const AppContent: React.FC = () => {
 
   if (selectedProduct) {
     return (
-      <ProductDetail
-        product={selectedProduct}
-        onBack={handleBackToProducts}
-        onProductUpdate={updateProduct}
-      />
+      <AnimatePresence mode="wait">
+        <PageTransition key="product-detail" isVisible={true}>
+          <ProductDetail
+            product={selectedProduct}
+            onBack={handleBackToProducts}
+            onProductUpdate={updateProduct}
+          />
+        </PageTransition>
+      </AnimatePresence>
     );
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 ${isArabic ? 'font-arabic' : ''}`}>
-      <div className="container mx-auto px-6 py-8">
-        {/* Header */}
-        <div className={`text-center mb-12 ${isArabic ? 'text-right' : 'text-left'}`}>
-          <div className="flex justify-end mb-6">
-            <LanguageToggle />
-          </div>
-          <div className="flex items-center justify-center mb-4">
-            <div className="bg-blue-600 p-3 rounded-2xl mr-4">
-              <Package className="h-8 w-8 text-white" />
-            </div>
-            <h1 className="text-4xl font-bold text-gray-900">
-              {isArabic ? 'مدير المنتجات' : 'Product Manager'}
-            </h1>
-          </div>
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            {isArabic 
-              ? 'إدارة كتالوج المنتجات الخاص بك مع رفع الصور الجميلة وتنظيم المتغيرات'
-              : 'Manage your product catalog with beautiful image uploads and variant organization'
-            }
-          </p>
-        </div>
+    <PageTransition key="product-list" isVisible={true}>
+      <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <FloatingParticles />
+        
+        <div className={`relative z-10 ${isArabic ? 'font-arabic' : ''}`}>
+          <div className="container mx-auto px-6 py-8">
+            {/* Header - simplified */}
+            <motion.div 
+              className={`text-center mb-12 ${isArabic ? 'text-right' : 'text-left'}`}
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="flex justify-end mb-6">
+                <LanguageToggle />
+              </div>
+              
+              <div className="flex items-center justify-center mb-6">
+                <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-4 rounded-2xl mr-4 shadow-lg">
+                  <Package className="h-10 w-10 text-white" />
+                </div>
+                
+                <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-gray-900 via-blue-900 to-purple-900">
+                  {isArabic ? 'مدير المنتجات' : 'Product Manager'}
+                </h1>
+              </div>
+              
+              <p className="text-gray-700 text-xl max-w-3xl mx-auto leading-relaxed">
+                {isArabic 
+                  ? 'إدارة كتالوج المنتجات الخاص بك مع رفع الصور الجميلة وتنظيم المتغيرات'
+                  : 'Manage your product catalog with beautiful image uploads and variant organization'
+                }
+              </p>
+            </motion.div>
 
-        {/* Search Bar */}
-        <SearchBar 
-          searchTerm={searchTerm} 
-          onSearchChange={setSearchTerm} 
-        />
+            {/* Search Bar - simplified */}
+            <SearchBar 
+              searchTerm={searchTerm} 
+              onSearchChange={setSearchTerm} 
+            />
 
-        {/* Stats */}
-        <div className="flex justify-center mb-8">
-          <div className="bg-white rounded-xl px-6 py-3 shadow-sm border border-gray-100">
-            <span className="text-gray-600">{isArabic ? 'إجمالي المنتجات: ' : 'Total Products: '}</span>
-            <span className="font-bold text-blue-600">{products?.length || 0}</span>
-            {searchTerm && (
-              <>
-                <span className="text-gray-400 mx-2">•</span>
-                <span className="text-gray-600">{isArabic ? 'عرض: ' : 'Showing: '}</span>
-                <span className="font-bold text-green-600">
-                  {products ? products.filter(p => {
-                    if (!p || !p.name_translations) return false;
-                    const term = searchTerm.toLowerCase();
-                    return (
-                      (p.name_translations.en && p.name_translations.en.toLowerCase().includes(term)) ||
-                      (p.name_translations.ar && p.name_translations.ar.toLowerCase().includes(term)) ||
-                      (p.product_code && p.product_code.toLowerCase().includes(term))
-                    );
-                  }).length : 0}
+            {/* Stats - simplified */}
+            <motion.div 
+              className="flex justify-center mb-12"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <div className="bg-white/20 backdrop-blur-xl rounded-2xl px-8 py-4 shadow-xl border border-white/30">
+                <span className="text-gray-700 font-medium">
+                  {isArabic ? 'إجمالي المنتجات: ' : 'Total Products: '}
                 </span>
-              </>
-            )}
+                <span className="font-black text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  {products?.length || 0}
+                </span>
+                {searchTerm && (
+                  <>
+                    <span className="text-gray-400 mx-3">•</span>
+                    <span className="text-gray-700 font-medium">{isArabic ? 'عرض: ' : 'Showing: '}</span>
+                    <span className="font-bold text-green-600">
+                      {products ? products.filter(p => {
+                        if (!p || !p.name_translations) return false;
+                        const term = searchTerm.toLowerCase();
+                        return (
+                          (p.name_translations.en && p.name_translations.en.toLowerCase().includes(term)) ||
+                          (p.name_translations.ar && p.name_translations.ar.toLowerCase().includes(term)) ||
+                          (p.product_code && p.product_code.toLowerCase().includes(term))
+                        );
+                      }).length : 0}
+                    </span>
+                  </>
+                )}
+              </div>
+            </motion.div>
+
+            {/* Product Grid - simplified */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <ProductGrid
+                products={products}
+                searchTerm={searchTerm}
+                onProductImageClick={handleProductImageClick}
+                onProductVariantsClick={handleProductVariantsClick}
+              />
+            </motion.div>
+
+            {/* Simplified Image Upload Modal */}
+            <AnimatePresence>
+              {showImageUpload && uploadingProduct && (
+                <ImageUpload
+                  onImageSelect={handleImageUpload}
+                  currentImage={apiService.getImageUrl(uploadingProduct.image)}
+                  isUploading={isUploading}
+                  uploadError={uploadError}
+                  uploadSuccess={uploadSuccess}
+                  onClose={() => {
+                    setShowImageUpload(false);
+                    setUploadingProduct(null);
+                    setUploadError(null);
+                    setUploadSuccess(false);
+                  }}
+                  title={`Upload Image for ${uploadingProduct.name_translations.en}`}
+                />
+              )}
+            </AnimatePresence>
           </div>
         </div>
-
-        {/* Product Grid */}
-        <ProductGrid
-          products={products}
-          searchTerm={searchTerm}
-          onProductImageClick={handleProductImageClick}
-          onProductVariantsClick={handleProductVariantsClick}
-        />
-
-        {/* Image Upload Modal */}
-        {showImageUpload && uploadingProduct && (
-          <ImageUpload
-            onImageSelect={handleImageUpload}
-            currentImage={apiService.getImageUrl(uploadingProduct.image)}
-            isUploading={isUploading}
-            uploadError={uploadError}
-            uploadSuccess={uploadSuccess}
-            onClose={() => {
-              setShowImageUpload(false);
-              setUploadingProduct(null);
-              setUploadError(null);
-              setUploadSuccess(false);
-            }}
-            title={`Upload Image for ${uploadingProduct.name_translations.en}`}
-          />
-        )}
       </div>
-    </div>
+    </PageTransition>
   );
 };
 
