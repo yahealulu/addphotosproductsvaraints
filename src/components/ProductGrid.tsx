@@ -22,15 +22,23 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
     if (!searchTerm) return products;
     
     const term = searchTerm.toLowerCase();
-    return products.filter(product => 
-      product.name_translations.en.toLowerCase().includes(term) ||
-      product.name_translations.ar.toLowerCase().includes(term) ||
-      product.product_code.toLowerCase().includes(term) ||
-      product.description_translations.en.toLowerCase().includes(term) ||
-      product.description_translations.ar.toLowerCase().includes(term) ||
-      product.product_category.toLowerCase().includes(term)
-    );
-  }, [products, searchTerm, language]);
+    return products.filter(product => {
+      // Safe property access with fallbacks
+      const nameEn = product.name_translations?.en?.toLowerCase() || '';
+      const nameAr = product.name_translations?.ar?.toLowerCase() || '';
+      const productCode = product.product_code?.toLowerCase() || '';
+      const descEn = product.description_translations?.en?.toLowerCase() || '';
+      const descAr = product.description_translations?.ar?.toLowerCase() || '';
+      const category = product.product_category?.toLowerCase() || '';
+      
+      return nameEn.includes(term) ||
+             nameAr.includes(term) ||
+             productCode.includes(term) ||
+             descEn.includes(term) ||
+             descAr.includes(term) ||
+             category.includes(term);
+    });
+  }, [products, searchTerm]);
 
   if (filteredProducts.length === 0) {
     return (

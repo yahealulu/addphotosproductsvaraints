@@ -47,16 +47,18 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
 
     try {
       if (uploadType === 'product') {
-        await apiService.uploadProductImage(product.id, file);
-        // Update the product image locally
-        const updatedProduct = { ...product, image: `storage/products/${file.name}` };
+        const response = await apiService.uploadProductImage(product.id, file);
+        // Use the actual image path from the server response
+        const newImagePath = response.data?.image || response.image || `storage/products/${file.name}`;
+        const updatedProduct = { ...product, image: newImagePath };
         onProductUpdate(updatedProduct);
       } else if (uploadType === 'variant' && selectedVariant) {
-        await apiService.uploadVariantImage(product.id, selectedVariant.id, file);
-        // Update the variant image locally
+        const response = await apiService.uploadVariantImage(product.id, selectedVariant.id, file);
+        // Use the actual image path from the server response
+        const newImagePath = response.data?.image || response.image || `storage/variants/${file.name}`;
         const updatedVariants = product.variants.map(v => 
           v.id === selectedVariant.id 
-            ? { ...v, image: `storage/variants/${file.name}` }
+            ? { ...v, image: newImagePath }
             : v
         );
         const updatedProduct = { ...product, variants: updatedVariants };

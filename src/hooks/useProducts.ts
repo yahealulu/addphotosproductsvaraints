@@ -14,13 +14,24 @@ export const useProducts = () => {
       const response: ProductsResponse = await apiService.getProducts();
       
       if (response.status && response.data) {
-        setProducts(response.data);
+        // Validate that data is an array and filter out invalid products
+        const validProducts = Array.isArray(response.data) 
+          ? response.data.filter(product => 
+              product && 
+              typeof product.id === 'number' &&
+              product.name_translations &&
+              product.description_translations
+            )
+          : [];
+        setProducts(validProducts);
       } else {
         throw new Error(response.message || 'Failed to fetch products');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred while fetching products');
       console.error('Error fetching products:', err);
+      // Set empty array on error to prevent crashes
+      setProducts([]);
     } finally {
       setLoading(false);
     }

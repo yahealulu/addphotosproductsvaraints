@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Package } from 'lucide-react';
 import { Product } from './types/Product';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -10,6 +10,7 @@ import { ProductDetail } from './components/ProductDetail';
 import { ImageUpload } from './components/ImageUpload';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { ErrorMessage } from './components/ErrorMessage';
+import ErrorBoundary from './components/ErrorBoundary';
 import { apiService } from './services/api';
 import { useLanguage } from './contexts/LanguageContext';
 
@@ -24,6 +25,60 @@ const AppContent: React.FC = () => {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
 
+  // URL management for navigation persistence
+  const getProductIdFromUrl = (): number | null => {
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get('product');
+    return productId ? parseInt(productId, 10) : null;
+  };
+
+  const setProductIdInUrl = (productId: number | null) => {
+    const url = new URL(window.location.href);
+    if (productId) {
+      url.searchParams.set('product', productId.toString());
+    } else {
+      url.searchParams.delete('product');
+    }
+    window.history.pushState({}, '', url.toString());
+  };
+
+  // Initialize selected product from URL on component mount
+  useEffect(() => {
+    const productIdFromUrl = getProductIdFromUrl();
+    if (productIdFromUrl && products.length > 0) {
+      const product = products.find(p => p.id === productIdFromUrl);
+      if (product) {
+        setSelectedProduct(product);
+      }
+    }
+  }, [products]);
+
+  // Update selected product when products list changes (e.g., after image upload)
+  useEffect(() => {
+    if (selectedProduct && products.length > 0) {
+      const updatedProduct = products.find(p => p.id === selectedProduct.id);
+      if (updatedProduct) {
+        setSelectedProduct(updatedProduct);
+      }
+    }
+  }, [products, selectedProduct]);
+
+  // Handle browser back/forward buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      const productIdFromUrl = getProductIdFromUrl();
+      if (productIdFromUrl && products.length > 0) {
+        const product = products.find(p => p.id === productIdFromUrl);
+        setSelectedProduct(product || null);
+      } else {
+        setSelectedProduct(null);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [products]);
+
   const handleProductImageClick = (product: Product) => {
     setUploadingProduct(product);
     setShowImageUpload(true);
@@ -33,6 +88,7 @@ const AppContent: React.FC = () => {
 
   const handleProductVariantsClick = (product: Product) => {
     setSelectedProduct(product);
+    setProductIdInUrl(product.id);
   };
 
   const handleImageUpload = async (file: File) => {
@@ -43,10 +99,11 @@ const AppContent: React.FC = () => {
     setUploadSuccess(false);
 
     try {
-      await apiService.uploadProductImage(uploadingProduct.id, file);
+      const response = await apiService.uploadProductImage(uploadingProduct.id, file);
       
-      // Update the product image locally
-      const updatedProduct = { ...uploadingProduct, image: `storage/products/${file.name}` };
+      // Use the actual image path from the server response
+      const newImagePath = response.data?.image || response.image || `storage/products/${file.name}`;
+      const updatedProduct = { ...uploadingProduct, image: newImagePath };
       updateProduct(updatedProduct);
       
       setUploadSuccess(true);
@@ -64,6 +121,7 @@ const AppContent: React.FC = () => {
 
   const handleBackToProducts = () => {
     setSelectedProduct(null);
+    setProductIdInUrl(null);
   };
 
   if (loading) return <LoadingSpinner />;
@@ -113,17 +171,21 @@ const AppContent: React.FC = () => {
         <div className="flex justify-center mb-8">
           <div className="bg-white rounded-xl px-6 py-3 shadow-sm border border-gray-100">
             <span className="text-gray-600">{isArabic ? 'إجمالي المنتجات: ' : 'Total Products: '}</span>
-            <span className="font-bold text-blue-600">{products.length}</span>
+            <span className="font-bold text-blue-600">{products?.length || 0}</span>
             {searchTerm && (
               <>
                 <span className="text-gray-400 mx-2">•</span>
                 <span className="text-gray-600">{isArabic ? 'عرض: ' : 'Showing: '}</span>
                 <span className="font-bold text-green-600">
-                  {products.filter(p => 
-                    p.name_translations.en.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    p.name_translations.ar.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    p.product_code.toLowerCase().includes(searchTerm.toLowerCase())
-                  ).length}
+                  {products ? products.filter(p => {
+                    if (!p || !p.name_translations) return false;
+                    const term = searchTerm.toLowerCase();
+                    return (
+                      (p.name_translations.en && p.name_translations.en.toLowerCase().includes(term)) ||
+                      (p.name_translations.ar && p.name_translations.ar.toLowerCase().includes(term)) ||
+                      (p.product_code && p.product_code.toLowerCase().includes(term))
+                    );
+                  }).length : 0}
                 </span>
               </>
             )}
@@ -163,7 +225,9 @@ const AppContent: React.FC = () => {
 function App() {
   return (
     <LanguageProvider>
-      <AppContent />
+      <ErrorBoundary>
+        <AppContent />
+      </ErrorBoundary>
     </LanguageProvider>
   );
 }

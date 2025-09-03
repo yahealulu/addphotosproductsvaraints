@@ -41,7 +41,8 @@ export const apiService = {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      return await response.json();
+      const result = await response.json();
+      return result;
     } catch (error) {
       console.error('Error uploading product image:', error);
       throw error;
@@ -66,7 +67,8 @@ export const apiService = {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      return await response.json();
+      const result = await response.json();
+      return result;
     } catch (error) {
       console.error('Error uploading variant image:', error);
       throw error;
