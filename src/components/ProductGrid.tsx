@@ -1,7 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { Product } from '../types/Product';
 import { ProductCard } from './ProductCard';
+import { Pagination } from './Pagination';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface ProductGridProps {
@@ -9,15 +10,18 @@ interface ProductGridProps {
   searchTerm: string;
   onProductImageClick: (product: Product) => void;
   onProductVariantsClick: (product: Product) => void;
+  itemsPerPage?: number;
 }
 
 export const ProductGrid: React.FC<ProductGridProps> = ({ 
   products, 
   searchTerm, 
   onProductImageClick, 
-  onProductVariantsClick 
+  onProductVariantsClick,
+  itemsPerPage = 50
 }) => {
   const { language, isArabic } = useLanguage();
+  const [currentPage, setCurrentPage] = useState(1);
   
   const filteredProducts = useMemo(() => {
     if (!searchTerm) return products;
@@ -41,7 +45,19 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
     });
   }, [products, searchTerm]);
 
-  if (filteredProducts.length === 0) {
+  // Calculate pagination
+  const totalProducts = filteredProducts.length;
+  const totalPages = Math.ceil(totalProducts / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentProducts = filteredProducts.slice(startIndex, endIndex);
+
+  // Reset to first page when search term changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  if (totalProducts === 0) {
     return (
       <motion.div 
         className="text-center py-12"
@@ -89,51 +105,71 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   }
 
   return (
-    <motion.div 
-      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      {filteredProducts.map((product, index) => (
-        <motion.div
-          key={product.id}
-          initial={{ 
-            opacity: 0, 
-            y: 60,
-            rotateX: 45,
-            scale: 0.8
-          }}
-          animate={{ 
-            opacity: 1, 
-            y: 0,
-            rotateX: 0,
-            scale: 1
-          }}
-          transition={{
-            duration: 0.6,
-            delay: index * 0.1,
-            ease: [0.6, -0.05, 0.01, 0.99],
-            type: "spring",
-            stiffness: 100
-          }}
-          whileInView={{
-            opacity: 1,
-            y: 0,
-            transition: {
-              duration: 0.6,
-              delay: index * 0.05
-            }
-          }}
-          viewport={{ once: true, margin: "-50px" }}
-        >
-          <ProductCard
-            product={product}
-            onImageClick={() => onProductImageClick(product)}
-            onVariantsClick={() => onProductVariantsClick(product)}
-          />
-        </motion.div>
-      ))}
-    </motion.div>
+    <div>
+      {/* Top Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        itemsPerPage={itemsPerPage}
+        totalItems={totalProducts}
+        position="top"
+      />
+      
+      <motion.div 
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 my-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        {currentProducts.map((product, index) => (
+          <motion.div
+            key={product.id}
+            initial={{ 
+              opacity: 0, 
+              y: 20,
+              scale: 0.95
+            }}
+            animate={{ 
+              opacity: 1, 
+              y: 0,
+              scale: 1
+            }}
+            transition={{
+              duration: 0.3,
+              delay: index * 0.02,
+              ease: "easeOut"
+            }}
+            whileInView={{
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              transition: {
+                duration: 0.2,
+                ease: "easeOut"
+              }
+            }}
+            viewport={{ once: true, margin: "-20px" }}
+          >
+            <ProductCard
+              product={product}
+              onImageClick={() => onProductImageClick(product)}
+              onVariantsClick={() => onProductVariantsClick(product)}
+            />
+          </motion.div>
+        ))}
+      </motion.div>
+      
+      {/* Bottom Pagination */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        itemsPerPage={itemsPerPage}
+        totalItems={totalProducts}
+        scrollToTop={true}
+        position="bottom"
+      />
+    </div>
   );
 };

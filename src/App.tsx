@@ -261,7 +261,7 @@ const AppContent: React.FC = () => {
                 {searchTerm && (
                   <>
                     <span className="text-gray-400 mx-3">•</span>
-                    <span className="text-gray-700 font-medium">{isArabic ? 'عرض: ' : 'Showing: '}</span>
+                    <span className="text-gray-700 font-medium">{isArabic ? 'تم العثور على: ' : 'Found: '}</span>
                     <span className="font-bold text-green-600">
                       {products ? products.filter(p => {
                         if (!p || !p.name_translations) return false;

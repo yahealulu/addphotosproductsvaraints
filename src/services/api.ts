@@ -1,5 +1,5 @@
-const API_BASE = 'https://st.amjadshbib.com/api';
-const IMAGE_BASE = 'https://st.amjadshbib.com/api/public';
+const API_BASE = 'https://setalkel.com/api';
+const IMAGE_BASE = 'https://setalkel.com/api/public';
 const TOKEN = '843|OP9EPzngkXRT0sWEzu0irLFkiYrgWKLAScSF3337213ff4ab';
 
 export const apiService = {

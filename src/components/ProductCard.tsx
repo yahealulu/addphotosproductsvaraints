@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { Package, Eye, Upload } from 'lucide-react';
 import { Product } from '../types/Product';
 import { apiService } from '../services/api';
@@ -23,22 +22,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   const productDescription = product.description_translations[language] || product.description_translations.en;
   
   return (
-    <motion.div
+    <div
       className={`relative group ${isArabic ? 'text-right' : 'text-left'}`}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
     >
-      <motion.div
-        className="relative bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/30 overflow-hidden transition-all duration-300 hover:shadow-xl hover:scale-[1.02]"
-        whileHover={{ 
-          y: -5,
-        }}
-        transition={{ 
-          type: "spring",
-          stiffness: 400,
-          damping: 25
-        }}
+      <div
+        className="relative bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-white/30 overflow-hidden transition-all duration-200 hover:shadow-xl hover:scale-[1.02] hover:-translate-y-1"
       >
         {/* Image container */}
         <div className="relative aspect-square bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
@@ -46,7 +34,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <img
               src={imageUrl}
               alt={product.name_translations.en}
-              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-200 hover:scale-105"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIxIDEyQzIxIDEzLjEgMjAuMSAxNCAE9IDE0SDVDMy45IDE0IDMgMTMuMSAzIDEyVjhDMyA2LjkgMy45IDYgNSA2SDE5QzIwLjEgNiAyMSA2LjkgMjEgOFYxMloiIHN0cm9rZT0iIzlDQTNBRiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+Cg==';
@@ -59,10 +47,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           )}
           
           {/* Upload overlay */}
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
             <button
               onClick={onImageClick}
-              className="bg-white/90 backdrop-blur-sm text-gray-800 px-4 py-2 rounded-lg font-medium shadow-lg hover:bg-white transition-colors duration-200 flex items-center space-x-2 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300"
+              className="bg-white/90 backdrop-blur-sm text-gray-800 px-4 py-2 rounded-lg font-medium shadow-lg hover:bg-white transition-all duration-150 flex items-center space-x-2 transform translate-y-2 group-hover:translate-y-0"
             >
               <Upload className="h-4 w-4" />
               <span>Upload</span>
@@ -100,14 +88,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             
             <button
               onClick={onVariantsClick}
-              className={`flex items-center ${isArabic ? 'space-x-reverse space-x-2' : 'space-x-2'} text-blue-600 hover:text-blue-700 text-sm font-semibold transition-colors duration-200 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg`}
+              className={`flex items-center ${isArabic ? 'space-x-reverse space-x-2' : 'space-x-2'} text-blue-600 hover:text-blue-700 text-sm font-semibold transition-all duration-150 bg-blue-50 hover:bg-blue-100 hover:scale-105 px-3 py-2 rounded-lg`}
             >
               <Eye className="h-4 w-4" />
               <span>{isArabic ? `المتغيرات (${product.variants.length})` : `Variants (${product.variants.length})`}</span>
             </button>
           </div>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 };
