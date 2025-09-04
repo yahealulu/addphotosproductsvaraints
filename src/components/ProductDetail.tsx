@@ -66,11 +66,18 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
         const newImagePath = response.data?.image || response.image || `storage/variants/${file.name}`;
         const updatedVariants = product.variants.map(v => 
           v.id === selectedVariant.id 
-            ? { ...v, image: newImagePath }
+            ? { ...v, image: newImagePath, imageTimestamp: Date.now() }
             : v
         );
         const updatedProduct = { ...product, variants: updatedVariants };
         onProductUpdate(updatedProduct);
+        
+        // Force image reload by updating the selected variant state
+        setSelectedVariant({
+          ...selectedVariant,
+          image: newImagePath,
+          imageTimestamp: Date.now()
+        });
       }
       
       setUploadSuccess(true);
@@ -396,7 +403,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
               transition={{ delay: 1.2 }}
             >
               {product.variants.map((variant, index) => {
-                const variantImageUrl = apiService.getImageUrl(variant.image);
+                const variantImageUrl = apiService.getImageUrl(variant.image, variant.imageTimestamp);
                 
                 return (
                   <motion.div 
@@ -446,6 +453,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
                     >
                       {variantImageUrl ? (
                         <motion.img
+                          key={`variant-${variant.id}-${variant.imageTimestamp || 'initial'}`}
                           src={variantImageUrl}
                           alt={`${product.name_translations.en} - ${variant.size}`}
                           className="w-full h-full object-cover"
@@ -543,7 +551,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
                 uploadType === 'product' 
                   ? productImageUrl 
                   : selectedVariant 
-                    ? apiService.getImageUrl(selectedVariant.image)
+                    ? apiService.getImageUrl(selectedVariant.image, selectedVariant.imageTimestamp)
                     : null
               }
               isUploading={isUploading}

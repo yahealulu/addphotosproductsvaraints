@@ -75,8 +75,10 @@ export const apiService = {
     }
   },
 
-  getImageUrl(imagePath: string | null) {
+  getImageUrl(imagePath: string | null, timestamp?: number) {
     if (!imagePath) return null;
-    return `${IMAGE_BASE}/${imagePath}`;
+    const baseUrl = `${IMAGE_BASE}/${imagePath}`;
+    // Add cache-busting parameter if timestamp is provided
+    return timestamp ? `${baseUrl}?t=${timestamp}` : baseUrl;
   }
 };

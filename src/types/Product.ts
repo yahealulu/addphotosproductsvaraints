@@ -45,6 +45,7 @@ export interface Variant {
   is_hidden: boolean;
   created_at: string;
   updated_at: string;
+  imageTimestamp?: number; // For cache-busting when image is updated
 }
 
 export interface ProductsResponse {
