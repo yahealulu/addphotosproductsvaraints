@@ -28,6 +28,7 @@ const AppContent: React.FC = () => {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [savedScrollPosition, setSavedScrollPosition] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Remove all heavy scroll-based parallax animations
   // const { scrollY } = useScroll();
@@ -42,12 +43,33 @@ const AppContent: React.FC = () => {
     return productId ? parseInt(productId, 10) : null;
   };
 
-  const setProductIdInUrl = (productId: number | null) => {
+  const getPageFromUrl = (): number => {
+    const params = new URLSearchParams(window.location.search);
+    const page = params.get('page');
+    return page ? parseInt(page, 10) : 1;
+  };
+
+  const setProductIdInUrl = (productId: number | null, page?: number) => {
     const url = new URL(window.location.href);
     if (productId) {
       url.searchParams.set('product', productId.toString());
+      // Save current page when navigating to product detail
+      if (page) {
+        url.searchParams.set('page', page.toString());
+      }
     } else {
       url.searchParams.delete('product');
+      // Keep page parameter when returning to product list
+    }
+    window.history.pushState({}, '', url.toString());
+  };
+
+  const setPageInUrl = (page: number) => {
+    const url = new URL(window.location.href);
+    if (page > 1) {
+      url.searchParams.set('page', page.toString());
+    } else {
+      url.searchParams.delete('page');
     }
     window.history.pushState({}, '', url.toString());
   };
@@ -80,9 +102,13 @@ const AppContent: React.FC = () => {
     }
   };
 
-  // Initialize selected product from URL on component mount
+  // Initialize selected product and page from URL on component mount
   useEffect(() => {
     const productIdFromUrl = getProductIdFromUrl();
+    const pageFromUrl = getPageFromUrl();
+    
+    setCurrentPage(pageFromUrl);
+    
     if (productIdFromUrl && products.length > 0) {
       const product = products.find(p => p.id === productIdFromUrl);
       if (product) {
@@ -105,6 +131,10 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     const handlePopState = () => {
       const productIdFromUrl = getProductIdFromUrl();
+      const pageFromUrl = getPageFromUrl();
+      
+      setCurrentPage(pageFromUrl);
+      
       if (productIdFromUrl && products.length > 0) {
         const product = products.find(p => p.id === productIdFromUrl);
         setSelectedProduct(product || null);
@@ -145,7 +175,12 @@ const AppContent: React.FC = () => {
     // Save current scroll position before navigating
     saveScrollPosition();
     setSelectedProduct(product);
-    setProductIdInUrl(product.id);
+    setProductIdInUrl(product.id, currentPage);
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    setPageInUrl(page);
   };
 
   const handleImageUpload = async (file: File) => {
@@ -289,6 +324,8 @@ const AppContent: React.FC = () => {
                 searchTerm={searchTerm}
                 onProductImageClick={handleProductImageClick}
                 onProductVariantsClick={handleProductVariantsClick}
+                initialPage={currentPage}
+                onPageChange={handlePageChange}
               />
             </motion.div>
 

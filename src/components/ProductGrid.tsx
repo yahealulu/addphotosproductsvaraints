@@ -11,6 +11,8 @@ interface ProductGridProps {
   onProductImageClick: (product: Product) => void;
   onProductVariantsClick: (product: Product) => void;
   itemsPerPage?: number;
+  initialPage?: number;
+  onPageChange?: (page: number) => void;
 }
 
 export const ProductGrid: React.FC<ProductGridProps> = ({ 
@@ -18,10 +20,12 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   searchTerm, 
   onProductImageClick, 
   onProductVariantsClick,
-  itemsPerPage = 50
+  itemsPerPage = 50,
+  initialPage = 1,
+  onPageChange
 }) => {
   const { language, isArabic } = useLanguage();
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(initialPage);
   
   const filteredProducts = useMemo(() => {
     if (!searchTerm) return products;
@@ -56,6 +60,18 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   React.useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
+
+  // Update page when initialPage changes
+  React.useEffect(() => {
+    setCurrentPage(initialPage);
+  }, [initialPage]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    if (onPageChange) {
+      onPageChange(page);
+    }
+  };
 
   if (totalProducts === 0) {
     return (
@@ -110,7 +126,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
-        onPageChange={setCurrentPage}
+        onPageChange={handlePageChange}
         itemsPerPage={itemsPerPage}
         totalItems={totalProducts}
         position="top"
@@ -164,7 +180,7 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
-        onPageChange={setCurrentPage}
+        onPageChange={handlePageChange}
         itemsPerPage={itemsPerPage}
         totalItems={totalProducts}
         scrollToTop={true}
