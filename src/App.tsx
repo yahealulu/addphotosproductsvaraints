@@ -16,6 +16,7 @@ import FloatingParticles from './components/FloatingParticles';
 import PageTransition from './components/PageTransition';
 import { apiService } from './services/api';
 import { useLanguage } from './contexts/LanguageContext';
+import { Notification } from './components/Notification'; // Added Notification import
 
 const AppContent: React.FC = () => {
   const { isArabic } = useLanguage();
@@ -27,8 +28,17 @@ const AppContent: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [notification, setNotification] = useState<{type: 'success' | 'error', message: string} | null>(null); // Added for UI notifications
   const [savedScrollPosition, setSavedScrollPosition] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState(1);
+
+  const showNotification = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message });
+    // Auto-hide notification after 3 seconds
+    setTimeout(() => {
+      setNotification(null);
+    }, 3000);
+  };
 
   // Remove all heavy scroll-based parallax animations
   // const { scrollY } = useScroll();
@@ -231,6 +241,7 @@ const AppContent: React.FC = () => {
             product={selectedProduct}
             onBack={handleBackToProducts}
             onProductUpdate={updateProduct}
+            showNotification={showNotification} // Added showNotification prop
           />
         </PageTransition>
       </AnimatePresence>
@@ -241,6 +252,17 @@ const AppContent: React.FC = () => {
     <PageTransition key="product-list" isVisible={true}>
       <div className="relative min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
         <FloatingParticles />
+        
+        {/* Notification */}
+        <AnimatePresence>
+          {notification && (
+            <Notification
+              type={notification.type}
+              message={notification.message}
+              onClose={() => setNotification(null)}
+            />
+          )}
+        </AnimatePresence>
         
         <div className={`relative z-10 ${isArabic ? 'font-arabic' : ''}`}>
           <div className="container mx-auto px-6 py-8">
@@ -324,6 +346,8 @@ const AppContent: React.FC = () => {
                 searchTerm={searchTerm}
                 onProductImageClick={handleProductImageClick}
                 onProductVariantsClick={handleProductVariantsClick}
+                onUpdateProduct={updateProduct}
+                showNotification={showNotification} // Added showNotification prop
                 initialPage={currentPage}
                 onPageChange={handlePageChange}
               />

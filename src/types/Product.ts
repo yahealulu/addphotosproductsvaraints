@@ -43,6 +43,7 @@ export interface Variant {
   standard_weight: string;
   image: string | null;
   is_hidden: boolean;
+  packaging?: string; // Added packaging field as optional
   created_at: string;
   updated_at: string;
   imageTimestamp?: number; // For cache-busting when image is updated

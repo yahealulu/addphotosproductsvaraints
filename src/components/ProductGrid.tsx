@@ -10,6 +10,8 @@ interface ProductGridProps {
   searchTerm: string;
   onProductImageClick: (product: Product) => void;
   onProductVariantsClick: (product: Product) => void;
+  onUpdateProduct: (updatedProduct: Product) => void;
+  showNotification: (type: 'success' | 'error', message: string) => void; // Added showNotification prop
   itemsPerPage?: number;
   initialPage?: number;
   onPageChange?: (page: number) => void;
@@ -20,6 +22,8 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
   searchTerm, 
   onProductImageClick, 
   onProductVariantsClick,
+  onUpdateProduct,
+  showNotification, // Added showNotification prop
   itemsPerPage = 50,
   initialPage = 1,
   onPageChange
@@ -171,6 +175,8 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
               product={product}
               onImageClick={() => onProductImageClick(product)}
               onVariantsClick={() => onProductVariantsClick(product)}
+              onUpdateProduct={onUpdateProduct}
+              showNotification={showNotification} // Added showNotification prop
             />
           </motion.div>
         ))}

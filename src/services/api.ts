@@ -5,7 +5,8 @@ const TOKEN = '843|OP9EPzngkXRT0sWEzu0irLFkiYrgWKLAScSF3337213ff4ab';
 export const apiService = {
   async getProducts() {
     try {
-      const response = await fetch(`${API_BASE}/products`, {
+      // Updated to use the new endpoint with q=hidden parameter
+      const response = await fetch(`${API_BASE}/products?q=hidden`, {
         headers: {
           'Authorization': `Bearer ${TOKEN}`,
           'Accept': 'application/json',
@@ -19,6 +20,106 @@ export const apiService = {
       return await response.json();
     } catch (error) {
       console.error('Error fetching products:', error);
+      throw error;
+    }
+  },
+
+  async updateProductHiddenStatus(productId: number, isHidden: boolean) {
+    try {
+      const formData = new FormData();
+      formData.append('is_hidden', isHidden ? '1' : '0');
+      formData.append('_method', 'PUT');
+      
+      const response = await fetch(`${API_BASE}/products/${productId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${TOKEN}`,
+        },
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating product hidden status:', error);
+      throw error;
+    }
+  },
+
+  async updateVariantHiddenStatus(productId: number, variantId: number, isHidden: boolean) {
+    try {
+      const formData = new FormData();
+      formData.append('is_hidden', isHidden ? '1' : '0');
+      formData.append('_method', 'PUT');
+      
+      const response = await fetch(`${API_BASE}/products/${productId}/variants/${variantId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${TOKEN}`,
+        },
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating variant hidden status:', error);
+      throw error;
+    }
+  },
+
+  async updateVariantPackaging(productId: number, variantId: number, packaging: string) {
+    try {
+      const formData = new FormData();
+      formData.append('packaging', packaging);
+      formData.append('_method', 'PUT');
+      
+      const response = await fetch(`${API_BASE}/products/${productId}/variants/${variantId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${TOKEN}`,
+        },
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating variant packaging:', error);
+      throw error;
+    }
+  },
+
+  async updateProductWeightUnit(productId: number, weightUnit: string) {
+    try {
+      const formData = new FormData();
+      formData.append('weight_unit', weightUnit);
+      formData.append('_method', 'PUT');
+      
+      const response = await fetch(`${API_BASE}/products/${productId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${TOKEN}`,
+        },
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating product weight unit:', error);
       throw error;
     }
   },

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { ArrowLeft, Package, Upload, Sparkles, Star } from 'lucide-react';
+import { ArrowLeft, Package, Upload, Sparkles, Star, Eye, EyeOff } from 'lucide-react';
 import { Product, Variant } from '../types/Product';
 import { apiService } from '../services/api';
 import { ImageUpload } from './ImageUpload';
@@ -11,12 +11,14 @@ interface ProductDetailProps {
   product: Product;
   onBack: () => void;
   onProductUpdate: (updatedProduct: Product) => void;
+  showNotification: (type: 'success' | 'error', message: string) => void;
 }
 
 export const ProductDetail: React.FC<ProductDetailProps> = ({ 
   product, 
   onBack, 
-  onProductUpdate 
+  onProductUpdate,
+  showNotification
 }) => {
   const { language, isArabic } = useLanguage();
   const [showImageUpload, setShowImageUpload] = useState(false);
@@ -268,6 +270,52 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
                   </motion.span>
                 </motion.div>
               ))}
+              
+              {/* Weight Unit Dropdown */}
+              <motion.div
+                className="bg-white/40 backdrop-blur-sm p-4 rounded-xl border border-white/30 col-span-2"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 1.3 }}
+                whileHover={{ 
+                  scale: 1.02, 
+                  backgroundColor: "rgba(255, 255, 255, 0.6)"
+                }}
+              >
+                <span className="font-semibold text-gray-800">{isArabic ? 'وحدة الوزن:' : 'Weight Unit:'}</span>
+                <div className="mt-2">
+                  <select
+                    value={product.weight_unit || ''}
+                    onChange={async (e) => {
+                      const newWeightUnit = e.target.value;
+                      try {
+                        await apiService.updateProductWeightUnit(product.id, newWeightUnit);
+                        
+                        // Update the product in the UI
+                        const updatedProduct = { ...product, weight_unit: newWeightUnit };
+                        onProductUpdate(updatedProduct);
+                        
+                        // Show success notification
+                        showNotification('success', 'Product weight unit updated successfully');
+                      } catch (error) {
+                        console.error('Error updating product weight unit:', error);
+                        // Show error notification
+                        showNotification('error', 'Error updating product weight unit');
+                      }
+                    }}
+                    className="w-full py-2 px-3 rounded-lg bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">{isArabic ? 'اختر وحدة الوزن' : 'Select Weight Unit'}</option>
+                    <option value="KG">KG</option>
+                    <option value="G">G</option>
+                    <option value="mL">mL</option>
+                    <option value="L">L</option>
+                    <option value="m">m</option>
+                    <option value="c.m">c.m</option>
+                    <option value="libra">libra</option>
+                  </select>
+                </div>
+              </motion.div>
             </motion.div>
           </motion.div>
 
@@ -521,7 +569,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
                         {variant.size}
                       </motion.p>
                       <motion.p 
-                        className="text-sm text-gray-600 bg-gray-100/50 backdrop-blur-sm px-3 py-1 rounded-full inline-block"
+                        className="text-sm text-gray-600 bg-gray-100/50 backdrop-blur-sm px-3 py-1 rounded-full inline-block mb-3"
                         whileHover={{ 
                           backgroundColor: "rgba(59, 130, 246, 0.1)",
                           scale: 1.05 
@@ -529,6 +577,94 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
                       >
                         {isArabic ? 'المعرف:' : 'ID:'} {variant.id}
                       </motion.p>
+                      
+                      {/* Hidden badge for variant */}
+                      {variant.is_hidden && (
+                        <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-md font-medium mb-2 inline-block">
+                          Hidden
+                        </div>
+                      )}
+                      
+                      {/* Variant controls */}
+                      <div className="flex flex-col space-y-2 mt-3">
+                        {/* Hidden toggle for variant */}
+                        <button
+                          onClick={async () => {
+                            try {
+                              const newHiddenStatus = !variant.is_hidden;
+                              await apiService.updateVariantHiddenStatus(product.id, variant.id, newHiddenStatus);
+                              
+                              // Update the product in the UI
+                              const updatedVariants = product.variants.map(v => 
+                                v.id === variant.id ? { ...v, is_hidden: newHiddenStatus } : v
+                              );
+                              const updatedProduct = { ...product, variants: updatedVariants };
+                              onProductUpdate(updatedProduct);
+                              
+                              // Show success notification
+                              showNotification('success', 'Variant visibility updated successfully');
+                            } catch (error) {
+                              console.error('Error updating variant hidden status:', error);
+                              // Show error notification
+                              showNotification('error', 'Error updating variant visibility');
+                            }
+                          }}
+                          className={`flex items-center justify-center w-full py-2 rounded-lg text-sm font-medium transition-colors ${
+                            variant.is_hidden 
+                              ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                              : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          }`}
+                        >
+                          {variant.is_hidden ? (
+                            <>
+                              <EyeOff className="h-4 w-4 mr-1" />
+                              {isArabic ? 'إظهار' : 'Show'}
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="h-4 w-4 mr-1" />
+                              {isArabic ? 'إخفاء' : 'Hide'}
+                            </>
+                          )}
+                        </button>
+                        
+                        {/* Packaging dropdown */}
+                        <div className="relative">
+                          <select
+                            value={variant.packaging || ''}
+                            onChange={async (e) => {
+                              const newPackaging = e.target.value;
+                              try {
+                                await apiService.updateVariantPackaging(product.id, variant.id, newPackaging);
+                                
+                                // Update the product in the UI
+                                const updatedVariants = product.variants.map(v => 
+                                  v.id === variant.id ? { ...v, packaging: newPackaging } : v
+                                );
+                                const updatedProduct = { ...product, variants: updatedVariants };
+                                onProductUpdate(updatedProduct);
+                                
+                                // Show success notification
+                                showNotification('success', 'Variant packaging updated successfully');
+                              } catch (error) {
+                                console.error('Error updating variant packaging:', error);
+                                // Show error notification
+                                showNotification('error', 'Error updating variant packaging');
+                              }
+                            }}
+                            className="w-full py-2 px-3 rounded-lg bg-white border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          >
+                            <option value="">{isArabic ? 'اختر التغليف' : 'Select Packaging'}</option>
+                            <option value="Plastic">Plastic</option>
+                            <option value="Glass">Glass</option>
+                            <option value="Carton">Carton</option>
+                            <option value="Canned">Canned</option>
+                            <option value="Vacuum">Vacuum</option>
+                            <option value="Wood">Wood</option>
+                            <option value="Bag">Bag</option>
+                          </select>
+                        </div>
+                      </div>
                     </motion.div>
                   </motion.div>
                 );
